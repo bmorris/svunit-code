@@ -1,25 +1,3 @@
-//###############################################################
-//
-//  Licensed to the Apache Software Foundation (ASF) under one
-//  or more contributor license agreements.  See the NOTICE file
-//  distributed with this work for additional information
-//  regarding copyright ownership.  The ASF licenses this file
-//  to you under the Apache License, Version 2.0 (the
-//  "License"); you may not use this file except in compliance
-//  with the License.  You may obtain a copy of the License at
-//
-//  http://www.apache.org/licenses/LICENSE-2.0
-//
-//  Unless required by applicable law or agreed to in writing,
-//  software distributed under the License is distributed on an
-//  "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-//  KIND, either express or implied.  See the License for the
-//  specific language governing permissions and limitations
-//  under the License.
-//
-//###############################################################
-
-`include "svunit_uvm_mock_pkg.sv"
 `include "svunit_defines.svh"
 `include "apb_mon.sv"
 `include "apb_xaction.sv"
@@ -46,7 +24,7 @@ module apb_mon_unit_test;
   uvm_tlm_analysis_fifo #(apb_xaction) af;
 
   //===================================
-  // This is the UUT that we're 
+  // This is the UUT that we're
   // running the Unit Tests on
   //===================================
   apb_mon my_apb_mon;
@@ -97,7 +75,7 @@ module apb_mon_unit_test;
 
 
   //===================================
-  // Here we deconstruct anything we 
+  // Here we deconstruct anything we
   // need after running the Unit Tests
   //===================================
   task teardown();

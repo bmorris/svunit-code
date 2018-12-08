@@ -1,25 +1,22 @@
 #!/usr/bin/perl
 
-################################################################
+############################################################################
 #
-#  Licensed to the Apache Software Foundation (ASF) under one
-#  or more contributor license agreements.  See the NOTICE file
-#  distributed with this work for additional information
-#  regarding copyright ownership.  The ASF licenses this file
-#  to you under the Apache License, Version 2.0 (the
-#  "License"); you may not use this file except in compliance
-#  with the License.  You may obtain a copy of the License at
+#  Copyright 2011 XtremeEDA Corp.
 #  
-#  http://www.apache.org/licenses/LICENSE-2.0
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
 #  
-#  Unless required by applicable law or agreed to in writing,
-#  software distributed under the License is distributed on an
-#  "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-#  KIND, either express or implied.  See the License for the
-#  specific language governing permissions and limitations
-#  under the License.
+#      http://www.apache.org/licenses/LICENSE-2.0
+#  
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
 #
-################################################################
+############################################################################
 
 use strict;
 use Getopt::Long;
@@ -42,6 +39,7 @@ my $simulator;
 my @defines;
 my @filelists;
 my $uvm;
+my $wavedrom;
 my @simargs;
 my @compileargs;
 my $outdir = ".";
@@ -51,8 +49,7 @@ my @tests;
 my $help;
 
 sub usage () {
-  #print "Usage:  runSVUnit -s|--sim <simulator> [-l|--log <log> -d|--define <macro> -f|--filelist <file> -U|-uvm -m|-mixedsim <vhdlfile>\n";
-  print "Usage:  runSVUnit -s|--sim <simulator> [-l|--log <log> -d|--define <macro> -f|--filelist <file> -U|-uvm\n";
+  print "Usage:  runSVUnit -s|--sim <simulator> [-l|--log <log> -d|--define <macro> -f|--filelist <file> -U|-uvm -m|-mixedsim <vhdlfile>\n";
   print "                  -r|--r_arg <option> -c|--c_arg <option> -o|--out <dir> -t|--test <test>]\n";
   print "  -s|--sim <simulator>     : simulator is either of questa, modelsim, riviera, ius or vcs\n";
   print "  -l|--log <log>           : simulation log file (default: run.log)\n";
@@ -63,7 +60,8 @@ sub usage () {
   print "  -U|--uvm                 : run SVUnit with UVM\n";
   print "  -o|--out                 : output directory for tmp and simulation files\n";
   print "  -t|--test                : specifies a unit test to run (multiple can be given)\n";
-  #print "  -m|--mixedsim <vhdlfile> : specifies vhdl file in mixed (verilog and vhdl) environment\n";
+  print "  -m|--mixedsim <vhdlfile> : consolidated file list with VHDL files and command line switches\n";
+  print "  -w|--wavedrom            : process json files as wavedrom output\n";
   print "  -h|--help                : prints this help screen\n";
   print "\n";
   exit 1;
@@ -72,13 +70,13 @@ sub usage () {
 sub clean () {
   find({
       wanted => sub {
-                      if (/.*testsuite\.sv$/   or
-                          /.*testrunner\.sv$/
+                      if (/^\..*testsuite\.sv$/   or
+                          /^\..*testrunner\.sv$/
                       ) {
                         unlink;
                       }
                     }
-    }, qw( . ));
+    }, $outdir);
 
   unlink qw( run.log .svunit.f vsim.wlf ncsc.log irun.key );
   system("rm -rf work INCA_libs");
@@ -94,7 +92,8 @@ GetOptions("l|log=s" => \$logfile,
            "c|c_arg=s" => \@compileargs,
            "o|out=s" => \$outdir,
            "m|mixedsim=s" => \$vhdlfile,
-           "t|test=s" => \@tests,
+           "t|test=s{,}" => \@tests,
+           "w|wavedrom" => \$wavedrom,
            "h|help" => \$help
            ) or usage();
 
@@ -111,10 +110,9 @@ push @defines, qq!SVUNIT_VERSION='"$version"'!;
 
 # simulator check
 $simulator =~ tr/A-Z/a-z/;
-$simulator =~ s/questa/qverilog/;
+$simulator =~ s/questa/modelsim/;
 $simulator =~ s/ius/irun/;
-usage() if $simulator ne "qverilog" &&
-           $simulator ne "irun" &&
+usage() if $simulator ne "irun" &&
            $simulator ne "modelsim" &&
            $simulator ne "riviera" &&
            $simulator ne "vcs";
@@ -122,15 +120,16 @@ usage() if $simulator ne "qverilog" &&
 # start the command line
 $cmd = "cd $outdir; ";
 # add the vdhl switches if necessary
-$cmd .= "vcom -mixedsvvh -work work $vhdlfile ; " if $vhdlfile;
 if ($simulator eq "modelsim" or $simulator eq "riviera") {
   $cmd .= "vlib work; ";
+  $cmd .= "vcom -work work -f $vhdlfile ; " if $vhdlfile;
   $cmd .= "vlog -l $vlogfile ";
-  $cmd .= "-mixedsvvh " if $vhdlfile;
 } elsif ($simulator eq "vcs") {
   $cmd .= "$simulator -R -sverilog -l $logfile";
+  $cmd .= "-f $vhdlfile " if $vhdlfile;
 } else {
-  $cmd .= "$simulator -l $logfile";
+  $cmd .= "$simulator -l $logfile ";
+  $cmd .= "-f $vhdlfile " if $vhdlfile;
 }
 
 # add the uvm switches if necessary
@@ -151,20 +150,30 @@ $cmd .= " -f .svunit.f";
 $cmd .= " +define+" . join " +define+", @defines if (@defines > 0);
 
 if ($simulator eq "modelsim" or $simulator eq "riviera") {
-  $cmd .= qq! @compileargs; vsim @simargs -lib work -c -do "run -all; quit" -l $logfile testrunner!;
-} elsif ($simulator eq "qverilog") {
-  $cmd .= " @compileargs -R @simargs -";
+  if (!grep(/(^| )(-gui|-c|-i)( |$)/, @simargs)) {
+    push @simargs, "-c";
+  }
+  $cmd .= qq! @compileargs; vsim @simargs -lib work -do "run -all; quit" -l $logfile testrunner!;
 } else {
-  $cmd .= " @compileargs @simargs";
+  $cmd .= " @compileargs @simargs -top testrunner";
 }
 
 my $build_cmd = "buildSVUnit -o $outdir";
 foreach (@tests) {
   $build_cmd .= " -t $_";
 }
+$build_cmd .= " --uvm" if $uvm;
+$build_cmd .= " --wavedrom" if $wavedrom;
+
+# include mock package for UVM compilation
+if (defined $uvm) {
+  $build_cmd .= " --mock";
+}
 
 # run!!
-system("$build_cmd");
+if (system("$build_cmd")) {
+  exit -1;
+}
 print $cmd . "\n";
 system("$cmd");
 system("svunit_user_feedback.pl")

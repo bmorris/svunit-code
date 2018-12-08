@@ -1,25 +1,3 @@
-//###############################################################
-//
-//  Licensed to the Apache Software Foundation (ASF) under one
-//  or more contributor license agreements.  See the NOTICE file
-//  distributed with this work for additional information
-//  regarding copyright ownership.  The ASF licenses this file
-//  to you under the Apache License, Version 2.0 (the
-//  "License"); you may not use this file except in compliance
-//  with the License.  You may obtain a copy of the License at
-//
-//  http://www.apache.org/licenses/LICENSE-2.0
-//
-//  Unless required by applicable law or agreed to in writing,
-//  software distributed under the License is distributed on an
-//  "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-//  KIND, either express or implied.  See the License for the
-//  specific language governing permissions and limitations
-//  under the License.
-//
-//###############################################################
-
-`include "svunit_uvm_mock_pkg.sv"
 `include "svunit_defines.svh"
 `include "apb_coverage.sv"
 
@@ -32,7 +10,7 @@ module apb_coverage_unit_test;
 
 
   //===================================
-  // This is the UUT that we're 
+  // This is the UUT that we're
   // running the Unit Tests on
   //===================================
   apb_coverage my_apb_coverage;
@@ -72,7 +50,7 @@ module apb_coverage_unit_test;
 
 
   //===================================
-  // Here we deconstruct anything we 
+  // Here we deconstruct anything we
   // need after running the Unit Tests
   //===================================
   task teardown();
@@ -143,14 +121,14 @@ module apb_coverage_unit_test;
 
     a = apb_xaction::type_id::create();
     void'(a.randomize() with { addr == 'hfc;
-                               data == 0; 
+                               data == 0;
                                kind == WRITE;
                              });
 
     my_apb_coverage.write(a);
 
     `FAIL_IF(my_apb_coverage.cg.addr_max_cp.get_coverage() != 100);
- 
+
   `SVTEST_END
 
   //-------------------------------------
@@ -164,7 +142,7 @@ module apb_coverage_unit_test;
 
     a = apb_xaction::type_id::create();
     void'(a.randomize() with { addr == 1;
-                               data == 0; 
+                               data == 0;
                                kind == WRITE;
                              });
 
@@ -181,7 +159,7 @@ module apb_coverage_unit_test;
     end
 
     `FAIL_IF(my_apb_coverage.cg.addr_bins_cp.get_coverage() != 100);
- 
+
   `SVTEST_END
 
   //-------------------------------------
@@ -200,7 +178,7 @@ module apb_coverage_unit_test;
     my_apb_coverage.write(a);
 
     `FAIL_IF(my_apb_coverage.cg.data_max_cp.get_coverage() != 100);
- 
+
   `SVTEST_END
 
   //-------------------------------------
@@ -249,7 +227,7 @@ module apb_coverage_unit_test;
     my_apb_coverage.write(a);
 
     `FAIL_IF(my_apb_coverage.cg.kind_cp.get_coverage() != 100);
- 
+
   `SVTEST_END
 
 

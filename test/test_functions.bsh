@@ -3,13 +3,26 @@ create_unit_test() {
   create_unit_test.pl $1
 }
 
+declare -a SVUNIT_SIMULATORS
+set_simulators() {
+  if [ `which irun` ]; then
+    SVUNIT_SIMULATORS[${#SVUNIT_SIMULATORS[*]}]="irun"
+  fi
+  if [ `which vcs` ]; then
+    SVUNIT_SIMULATORS[${#SVUNIT_SIMULATORS[*]}]="vcs"
+  fi
+  if [ `which vlog` ]; then
+    SVUNIT_SIMULATORS[${#SVUNIT_SIMULATORS[*]}]="modelsim"
+  fi
+
+  if [ "${#SVUNIT_SIMULATORS[*]}" == "0" ]; then
+    echo None of irun, modelsim or vcs are in your path. You need at least 1 simulator to regress svunit-code!
+    exit 1
+  fi
+}
+
 setup() {
   ./clean
-  module load > /dev/null 2>&1
-  if [ "$?" == "0" ]; then
-    module load ius
-    module load questa
-  fi
 }
 
 golden_module_unit_test() {
@@ -64,16 +77,14 @@ verify_testsuite() {
 }
 
 verify_testrunner() {
-  #PWD=`pwd | sed -e "s/[\/-]/_/g"`
   tr=.testrunner.sv
-  if [ "$5" != "" ]; then
-    tr=$5
+  if [ "$6" != "" ]; then
+    tr=$6
   fi
-  PWD="_"
-  sed -e "s/PWD/$PWD/g" $1 | \
-    sed -e "s/CHILD1/$2/g" | \
-    sed -e "s/CHILD2/$3/g" | \
-    sed -e "s/CHILD3/$4/g" > .$1
+  sed -e "s/TS0/$2/g" $1 | \
+    sed -e "s/TS1/$3/g" | \
+    sed -e "s/TS2/$4/g" | \
+    sed -e "s/TS3/$5/g" > .$1
   verify_file .$1 $tr
 }
 

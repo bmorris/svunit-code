@@ -1,25 +1,22 @@
 #!/usr/bin/perl
 
-################################################################
+############################################################################
 #
-#  Licensed to the Apache Software Foundation (ASF) under one
-#  or more contributor license agreements.  See the NOTICE file
-#  distributed with this work for additional information
-#  regarding copyright ownership.  The ASF licenses this file
-#  to you under the Apache License, Version 2.0 (the
-#  "License"); you may not use this file except in compliance
-#  with the License.  You may obtain a copy of the License at
+#  Copyright 2011 XtremeEDA Corp.
 #  
-#  http://www.apache.org/licenses/LICENSE-2.0
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
 #  
-#  Unless required by applicable law or agreed to in writing,
-#  software distributed under the License is distributed on an
-#  "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-#  KIND, either express or implied.  See the License for the
-#  specific language governing permissions and limitations
-#  under the License.
+#      http://www.apache.org/licenses/LICENSE-2.0
+#  
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
 #
-################################################################
+############################################################################
 
 use strict;
 use Cwd;
@@ -39,6 +36,9 @@ my $VERSION;
 my $version;
 my $outdir = ".";
 my @tests;
+my $mock;
+my $uvm;
+my $wavedrom;
 my $help;
 
 
@@ -51,6 +51,9 @@ sub usage() {
   print "Usage:  buildSVUnit [ -t <test> -h|--help ]\n\n";
   print "  -o|--out                 : output directory for tmp and simulation files\n";
   print "  -t|--test                : specifies a unit test to run (multiple can be given)\n";
+  print "  -m|--mock                : includes the uvm_mock_pkg to the final build file\n";
+  print "  -U|--uvm                 : build SVUnit with UVM\n";
+  print "  -w|--wavedrom            : process json files as wavedrom output\n";
   print "  -h|--help                : prints this help screen\n";
   print "\n";
   exit 1;
@@ -155,7 +158,8 @@ sub getUnittests {
         push(@unittests, "$dir/$_");
       }
       else {
-        print "WARNING: Unit test '$_' could not be found in directory $dir\n";
+        print "ERROR: Unit test '$_' could not be found in directory $dir\n";
+        exit 1;
       }
     }
   }
@@ -169,6 +173,9 @@ sub getUnittests {
 
 GetOptions("o|out=s" => \$outdir,
            "t|test=s" => \@tests,
+           "m|mock" => \$mock,
+           "U|uvm" => \$uvm,
+           "w|wavedrom" => \$wavedrom,
            "h|help" => \$help
            ) or usage();
 
@@ -181,8 +188,18 @@ $FILELIST = IO::File->new();
 $FILELIST->open(">$outdir/.svunit.f");
 $FILELIST->print("+incdir+$cwd\n");
 $FILELIST->print("+incdir+$ENV{SVUNIT_INSTALL}/svunit_base\n");
-$FILELIST->print("+incdir+$ENV{SVUNIT_INSTALL}/svunit_base/uvm-mock\n");
 $FILELIST->print("$ENV{SVUNIT_INSTALL}/svunit_base/svunit_pkg.sv\n");
+if (defined $mock) {
+  $FILELIST->print("$ENV{SVUNIT_INSTALL}/svunit_base/uvm-mock/svunit_uvm_mock_pkg.sv\n");
+}
+
+if ($uvm) {
+  $FILELIST->print("+incdir+$ENV{SVUNIT_INSTALL}/svunit_base/uvm-mock\n");
+  $FILELIST->print("$ENV{SVUNIT_INSTALL}/svunit_base/uvm-mock/svunit_uvm_mock_pkg.sv\n");
+}
+if ($wavedrom) {
+  system("python3 $ENV{SVUNIT_INSTALL}/bin/wavedromSVUnit.py");
+}
 
 getFilelists;
 buildTestsuite($pwd);

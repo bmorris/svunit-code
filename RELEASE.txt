@@ -181,3 +181,94 @@ v3.10
 v3.11
 -----
 * uvm 1.2 support
+
+v3.12
+-----
+* calling FAIL macros outside the testcase
+* update for issue #4
+
+v3.13
+-----
+* testsuite specific updates
+
+v3.14
+-----
+* test generalizing to make the regression suite easier/more robust
+* udpate for issue #12
+
+v3.15
+-----
+* update for issue #7
+
+v3.16
+-----
+* pull https://github.com/tudortimi/svunit-code.git select_sim_for_tests
+
+v3.17
+-----
+* vhdl support via -m switch
+
+v3.18
+----
+* update for issue #17,#18
+* pull https://github.com/jesseprusi/svunit-code.git master
+
+v3.19
+-----
+* add a timeout when SVUNIT_TIMEOUT is defined
+
+v3.20
+-----
+* add vcs top to runSVUnit command line
+
+v3.21
+-----
+* pull https://github.com/chris-n-johnson/svunit-code.git fix-regex-used-for-cleanup
+
+v3.22
+-----
+* pull https://github.com/jesseprusi/svunit-code.git patch-2
+
+v3.23
+-----
+* pull https://github.com/jesseprusi/svunit-code.git patch-1
+
+v3.24
+-----
+* update for issue #20
+
+v3.25
+-----
+* pull https://github.com/chris-n-johnson/svunit-code.git fail_macro_argument_grouping
+
+v3.26
+-----
+* pull https://github.com/jesseprusi/svunit-code.git patch-3
+
+v3.27
+-----
+* pull https://github.com/tudortimi/svunit-code.git tudortimi-add_gitignore
+
+v3.28
+-----
+* pull https://github.com/B00Ze/svunit-code.git tests_fix
+
+v3.29
+-----
+* pull https://github.com/jesseprusi/svunit-code.git patch-4
+
+v3.30
+-----
+* pull https://github.com/tudortimi/svunit-code.git fix_uvm_build
+
+v3.31
+-----
+* merge wavedrom
+
+v3.32
+-----
+* updated the license headers b/c they were from a bad initial copy paste
+
+v3.33
+-----
+* wavedrom update to handle task outputs
